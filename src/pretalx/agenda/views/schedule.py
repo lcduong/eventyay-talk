@@ -92,7 +92,7 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
             exporter = url.url_name
 
         exporter = (
-            exporter[len("export.") :] if exporter.startswith("export.") else exporter
+            exporter[len("export."):] if exporter.startswith("export.") else exporter
         )
         responses = (register_data_exporters.send(request.event)
                      + register_my_data_exporters.send(request.event))
@@ -113,6 +113,11 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
             activate(request.event.locale)
 
         exporter.schedule = self.schedule
+        # This view is using for both talk and video component to export data:
+        #  1. From talk front end API call, 'talks' won't be put as request param,
+        # so if User not login, they will be forced to login page.
+        #  2. From video API call, 'talks' is input as request params and from video,
+        # we're not expecting User will be redirected to Talk component to login.
         if "-my" in exporter.identifier and self.request.user.id is None:
             if request.GET.get('talks'):
                 exporter.talk_ids = request.GET.get('talks').split(',')
